@@ -1,0 +1,35 @@
+{
+  "name": "safer-ts",
+  "version": "1.0.0",
+  "description": "A collection of utility types and data structures to provide a safer and more satisfying developer experience, inspired by Rust and functional programming paradigms",
+  "scripts": {
+    "clean": "rm -rf dist",
+    "build:cjs": "tsc -p tsconfig.cjs.json",
+    "build:esm": "tsc -p tsconfig.esm.json && mv dist/esm/index.js dist/esm/index.mjs",
+    "build": "npm run clean && npm run build:cjs && npm run build:esm",
+    "prepack": "npm run build"
+  },
+  "types": "./dist/cjs/index.d.ts",
+  "main": "./dist/cjs/index.js",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/esm/index.d.ts",
+        "default": "./dist/esm/index.mjs"
+      },
+      "require": {
+        "types": "./dist/cjs/index.d.ts",
+        "default": "./dist/cjs/index.js"
+      }
+    }
+  },
+  "files": [
+    "dist/**/*"
+  ],
+  "author": "bigbeno37",
+  "license": "MPL-2.0",
+  "dependencies": {
+    "typescript": "^4.9.4",
+    "zod": "^3.19.1"
+  }
+}
