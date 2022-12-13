@@ -51,7 +51,7 @@ export type SafeStorage<T extends Record<string, ZodSchema>> = {
  *
  * @param storage The Storage source (generally {@link sessionStorage} or {@link localStorage})
  */
-const getSafeStorage = (storage: Storage) => <S extends Record<string, ZodSchema>>(schema: S): SafeStorage<S> => ({
+export const getSafeStorage = (storage: Storage) => <S extends Record<string, ZodSchema>>(schema: S): SafeStorage<S> => ({
 	getItem: <K extends keyof S>(key: K) => intoOption(storage.getItem(key as string))
 		.map(value => parseJSON(value, schema[key])),
 	hasItem(key) {

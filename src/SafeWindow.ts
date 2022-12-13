@@ -3,7 +3,7 @@ import { io, IO } from './monads/IO';
 /**
  * Represents safer versions of various common {@link Window} utilities, generally involving {@link IO}.
  */
-type SafeWindow = {
+export type SafeWindow = {
 	/**
 	 * Returns an {@link IO} that will begin an interval with the given function and delay, which will then
 	 * return an object to clear the interval, no longer requiring {@link Window#clearInterval}.

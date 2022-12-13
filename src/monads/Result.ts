@@ -160,7 +160,7 @@ export const Err = <E, T>(error: E) => createResult<T, E>({ type: 'err', error }
  * Represents a Promise that will be resolved into a Result. This can be applicable to situations such as networking,
  * where a fetch request may succeed or fail, but is wrapped behind a Promise.
  */
-type AsyncResult<T, E> = Promise<Result<T, E>>;
+export type AsyncResult<T, E> = Promise<Result<T, E>>;
 
 /**
  * Converts a Promise into an {@link AsyncResult}, altering control flow to the {@link Result}. This may be preferable

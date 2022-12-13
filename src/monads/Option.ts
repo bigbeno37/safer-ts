@@ -76,7 +76,7 @@ export type Option<T> = ({ type: 'some', data: T } | { type: 'none' })
  *
  * @param option The option to be checked.
  */
-const isSome = <T>(option: Option<T>): option is Option<T> & { type: 'some', data: T } => {
+export const isSome = <T>(option: Option<T>): option is Option<T> & { type: 'some', data: T } => {
 	return option.type === 'some';
 };
 
@@ -86,7 +86,7 @@ const isSome = <T>(option: Option<T>): option is Option<T> & { type: 'some', dat
  *
  * @param option The option to be checked.
  */
-const isNone = <T>(option: Option<T>): option is Option<T> & { type: 'none' } => {
+export const isNone = <T>(option: Option<T>): option is Option<T> & { type: 'none' } => {
 	return option.type === 'none';
 };
 
