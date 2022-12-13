@@ -1,17 +1,17 @@
 import { io, IO } from './monads/IO';
-import { AsyncResult, Err, Ok, Result } from './monads/Result';
-import { z, ZodError, ZodSchema } from 'zod';
+import { AsyncResult, Err, Ok } from './monads/Result';
+import { ZodSchema } from 'zod';
 import { parseJSON } from './SafeJSON';
 
 type CreateConnection<T extends { disconnect: () => IO<void> }, E> = (onDisconnect: () => void) => IO<AsyncResult<T, E>>;
 
-type SafeWebSocket<S extends ZodSchema, M> = {
+type SafeWebSocket<S extends ZodSchema, M = string> = {
 	listen: (listener: (message: ReturnType<typeof parseJSON>, rawMessage: string) => void) => void,
 	send: (message: M) => IO<void>,
 	disconnect: () => IO<void>
 };
 
-export const createSafeWebSocket = <S extends ZodSchema, M>(url: string, messageSchema: S): CreateConnection<SafeWebSocket<S, M>, Event> => onDisconnect => {
+export const createSafeWebSocket = <S extends ZodSchema, M = string>(url: string, messageSchema: S): CreateConnection<SafeWebSocket<S, M>, Event> => onDisconnect => {
 	return io(() => {
 		const ws = new WebSocket(url);
 
