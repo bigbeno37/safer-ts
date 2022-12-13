@@ -5,3 +5,4 @@ export * from "./monads/Result";
 export * from "./SafeDOM";
 export * from "./SafeStorage";
 export * from "./SafeWindow";
+export * from "./SafeWebSocket";
