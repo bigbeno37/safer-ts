@@ -1,4 +1,4 @@
-import { io, IO, AsyncResult, Err, Ok, Result } from '../monads';
+import { io, IO, AsyncResult, Err, Ok } from '../monads';
 import { Schema, ZodSchema } from 'zod';
 import { parseJSON } from './SafeJSON';
 import { WebSocketServer } from 'ws';
@@ -17,7 +17,7 @@ export const createSafeWebSocket = <S extends ZodSchema, M = string>(url: string
 	return io(() => {
 		const ws = new WebSocket(url);
 
-		return new Promise((resolve, reject) => {
+		return new Promise((resolve) => {
 			ws.addEventListener('open', () => {
 				ws.addEventListener('close', onDisconnect);
 
@@ -32,7 +32,7 @@ export const createSafeWebSocket = <S extends ZodSchema, M = string>(url: string
 
 				resolve(Ok(safeWebSocket));
 			});
-			ws.addEventListener('error', (e) => reject(Err(e)))
+			ws.addEventListener('error', (e) => resolve(Err(e)))
 		});
 	});
 };
@@ -44,10 +44,10 @@ export type SafeWebSocketServer<S extends Schema, M> = {
 
 export const createSafeWebSocketServer = <S extends ZodSchema, M>(schema: S, config: { port: number }): IO<AsyncResult<SafeWebSocketServer<S, M>, Error>> => {
 	return io(() => {
-		return new Promise<Result<SafeWebSocketServer<S, M>, Error>>((resolve, reject) => {
+		return new Promise((resolve) => {
 			const wss = new WebSocketServer({ port: config.port });
 
-			wss.on('error', e => reject(e));
+			wss.on('error', e => resolve(Err(e)));
 			wss.on('listening', () => {
 				const safeServer = Ok<SafeWebSocketServer<S, M>, Error>({
 					_server: wss,
