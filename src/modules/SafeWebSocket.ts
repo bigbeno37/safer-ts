@@ -21,7 +21,7 @@ export type SafeWebSocketConfig<S extends ZodSchema, M> = {
 	createWebSocket?: (url: string) => WebSocket
 };
 
-const bindSafeWebSocketListeners = <S extends ZodSchema, M>(config: Pick<SafeWebSocketConfig<S, M>, "schema" | "onConnectionOpened">, ws: WebSocket) => {
+const intoSafeWebSocket = <S extends ZodSchema, M>(config: Pick<SafeWebSocketConfig<S, M>, "schema" | "onConnectionOpened">, ws: WebSocket): SafeWebSocket<M> => {
 	const safeWs: SafeWebSocket<M> = {
 		send: data => io(() => ws.send(JSON.stringify(data))),
 		close: () => io(() => ws.close())
@@ -36,17 +36,19 @@ const bindSafeWebSocketListeners = <S extends ZodSchema, M>(config: Pick<SafeWeb
 			Err: error => listeners.onInvalidMessage(error, data)
 		})
 	);
+
+	return safeWs;
 };
 
-export const createSafeWebSocket = <S extends ZodSchema, M>(config: SafeWebSocketConfig<S, M>): IO<AsyncResult<{}, Event>> => {
+export const createSafeWebSocket = <S extends ZodSchema, M>(config: SafeWebSocketConfig<S, M>): IO<AsyncResult<SafeWebSocket<M>, Event>> => {
 	return io(() => {
 		const ws = config.createWebSocket?.(config.url) ?? new WebSocket(config.url);
 
 		return new Promise((resolve) => {
 			ws.addEventListener('open', () => {
-				bindSafeWebSocketListeners(config, ws);
+				const safeWs = intoSafeWebSocket(config, ws);
 
-				resolve(Ok({}));
+				resolve(Ok(safeWs));
 			});
 
 			ws.addEventListener('error', (e) => resolve(Err(e)))
@@ -58,6 +60,7 @@ export type SafeWebSocketServerListeners<S extends ZodSchema, M> = {
 	onConnectionOpened: (ws: SafeWebSocket<M>) => SafeWebSocketListeners<S>
 };
 
+// TODO: It'd be pretty nifty if we could do some util stuff like keep track of all connected clients
 export type SafeWebSocketServerConfig<S extends ZodSchema, M> = {
 	schema: S,
 	port: number,
@@ -74,7 +77,7 @@ export const createSafeWebSocketServer = <S extends ZodSchema, M>(config: SafeWe
 				const listeners = config.onListening();
 
 				wss.on('connection', ws => {
-					bindSafeWebSocketListeners({ schema: config.schema, onConnectionOpened: listeners.onConnectionOpened }, ws as unknown as WebSocket);
+					intoSafeWebSocket({ schema: config.schema, onConnectionOpened: listeners.onConnectionOpened }, ws as unknown as WebSocket);
 				});
 
 				resolve(Ok({}));
