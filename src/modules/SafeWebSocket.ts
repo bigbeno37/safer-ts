@@ -1,81 +1,74 @@
 import { io, IO, AsyncResult, Err, Ok } from '../monads';
-import { Schema, ZodSchema } from 'zod';
-import { parseJSON } from './SafeJSON';
+import {ZodSchema, z} from 'zod';
+import {ParseJSONError, parseJSONWithSchema} from './SafeJSON';
 import { WebSocketServer } from 'ws';
-import { Listener } from '../types';
 
-export type CreateConnection<T extends { disconnect: () => IO<void> }, E> = (onDisconnect: () => void) => IO<AsyncResult<T, E>>;
-
-export type SafeWebSocket<S extends ZodSchema, M = string> = {
-	_ws: WebSocket,
-	listen: (listener: (message: ReturnType<typeof parseJSON<S>>, rawMessage: string) => void) => void,
-	send: (message: M) => IO<void>,
-	disconnect: () => IO<void>
+type SafeWebSocketConfig = {
+	url: string
 };
 
-export const createSafeWebSocket = <S extends ZodSchema, M = string>(url: string, messageSchema: S): CreateConnection<SafeWebSocket<S, M>, Event> => onDisconnect => {
+type SafeWebSocket<M> = {
+	send: (data: M) => IO<void>,
+	close: () => IO<void>
+};
+
+type SafeWebSocketConnectionHandler<S extends ZodSchema> = {
+	onClose: () => void,
+	onMessage: (message: z.infer<S>) => void,
+	onInvalidMessage: (error: ParseJSONError, rawMessage: string) => void
+};
+
+const bindSafeWebSocketListeners = <S extends ZodSchema, M>(schema: S, ws: WebSocket) => (createListeners: (ws: SafeWebSocket<M>) => SafeWebSocketConnectionHandler<S>) => {
+	const safeWs: SafeWebSocket<M> = {
+		send: data => io(() => ws.send(JSON.stringify(data))),
+		close: () => io(() => ws.close())
+	};
+
+	const listeners = createListeners(safeWs);
+
+	ws.addEventListener('close', listeners.onClose);
+	ws.addEventListener('message', ({data}) =>
+		parseJSONWithSchema(schema)(data).caseOf({
+			Ok: listeners.onMessage,
+			Err: error => listeners.onInvalidMessage(error, data)
+		})
+	);
+};
+
+const createSafeWebSocket = <S extends ZodSchema, M>(schema: S, config: SafeWebSocketConfig) => (createListeners: (ws: SafeWebSocket<M>) => SafeWebSocketConnectionHandler<S>): IO<AsyncResult<{}, Event>> => {
 	return io(() => {
-		const ws = new WebSocket(url);
+		const ws = new WebSocket(config.url);
 
 		return new Promise((resolve) => {
 			ws.addEventListener('open', () => {
-				ws.addEventListener('close', onDisconnect);
+				bindSafeWebSocketListeners(schema, ws)(createListeners);
 
-				const safeWebSocket: SafeWebSocket<S, M> = {
-					_ws: ws,
-					listen: listener => ws.addEventListener('message', ({data}) => {
-						listener(parseJSON(data, messageSchema), data);
-					}),
-					send: message => io(() => ws.send(JSON.stringify(message))),
-					disconnect: () => io(() => ws.close())
-				};
-
-				resolve(Ok(safeWebSocket));
+				resolve(Ok({}));
 			});
+
 			ws.addEventListener('error', (e) => resolve(Err(e)))
 		});
 	});
 };
 
-export type SafeWebSocketServer<S extends Schema, M> = {
-	_server: WebSocketServer,
-	onConnection: (onDisconnect: () => void) => (listener: (connection: SafeWebSocket<S, M>) => void) => Listener,
-}
+type SafeWebSocketServerListeners<S extends ZodSchema, M> = {
+	onConnection: (ws: SafeWebSocket<M>) => SafeWebSocketConnectionHandler<S>
+};
 
-export const createSafeWebSocketServer = <S extends ZodSchema, M>(schema: S, config: { port: number }): IO<AsyncResult<SafeWebSocketServer<S, M>, Error>> => {
+export const createSafeWebSocketServer = <S extends ZodSchema, M>(schema: S, config: {port: number}) => (createListeners: () => SafeWebSocketServerListeners<S, M>): IO<AsyncResult<{}, Error>> => {
 	return io(() => {
-		return new Promise((resolve) => {
+		return new Promise(resolve => {
 			const wss = new WebSocketServer({ port: config.port });
 
 			wss.on('error', e => resolve(Err(e)));
 			wss.on('listening', () => {
-				const safeServer = Ok<SafeWebSocketServer<S, M>, Error>({
-					_server: wss,
-					onConnection: onDisconnect => listener => {
-						const connectionListener = (ws: WebSocket) => {
-							ws.addEventListener('close', onDisconnect);
+				const listeners = createListeners();
 
-							const safeWebSocket: SafeWebSocket<S, M> = {
-								_ws: ws,
-								listen: listener => ws.addEventListener('message', ({data}) => {
-									listener(parseJSON(data, schema), data);
-								}),
-								send: message => io(() => ws.send(JSON.stringify(message))),
-								disconnect: () => io(() => ws.close())
-							};
-
-							listener(safeWebSocket);
-						};
-
-						wss.on('connection', connectionListener);
-
-						return {
-							removeListener: () => wss.off('connection', connectionListener)
-						}
-					}
+				wss.on('connection', ws => {
+					bindSafeWebSocketListeners(schema, ws as unknown as WebSocket)(listeners.onConnection);
 				});
 
-				resolve(safeServer);
+				resolve(Ok({}));
 			})
 		});
 	});

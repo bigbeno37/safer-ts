@@ -1,5 +1,5 @@
 import { z, ZodSchema } from 'zod';
-import { parseJSON, ParseJSONError } from './SafeJSON';
+import {ParseJSONError, parseJSONWithSchema} from './SafeJSON';
 import { intoOption, io, IO, Option, Result } from '../monads';
 
 /**
@@ -51,7 +51,7 @@ export type SafeStorage<T extends Record<string, ZodSchema>> = {
  */
 export const getSafeStorage = (storage: Storage) => <S extends Record<string, ZodSchema>>(schema: S): SafeStorage<S> => ({
 	getItem: <K extends keyof S>(key: K) => intoOption(storage.getItem(key as string))
-		.map(value => parseJSON(value, schema[key])),
+		.map(value => parseJSONWithSchema(schema[key])(value)),
 	hasItem(key) {
 		return this.getItem(key).isSome();
 	},
