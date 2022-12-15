@@ -17,7 +17,8 @@ export type SafeWebSocketListeners<S extends ZodSchema> = {
 export type SafeWebSocketConfig<S extends ZodSchema, M> = {
 	schema: S,
 	url: string,
-	onConnectionOpened: (ws: SafeWebSocket<M>) => SafeWebSocketListeners<S>
+	onConnectionOpened: (ws: SafeWebSocket<M>) => SafeWebSocketListeners<S>,
+	createWebSocket?: (url: string) => WebSocket
 };
 
 const bindSafeWebSocketListeners = <S extends ZodSchema, M>(config: Pick<SafeWebSocketConfig<S, M>, "schema" | "onConnectionOpened">, ws: WebSocket) => {
@@ -39,7 +40,7 @@ const bindSafeWebSocketListeners = <S extends ZodSchema, M>(config: Pick<SafeWeb
 
 export const createSafeWebSocket = <S extends ZodSchema, M>(config: SafeWebSocketConfig<S, M>): IO<AsyncResult<{}, Event>> => {
 	return io(() => {
-		const ws = new WebSocket(config.url);
+		const ws = config.createWebSocket?.(config.url) ?? new WebSocket(config.url);
 
 		return new Promise((resolve) => {
 			ws.addEventListener('open', () => {
