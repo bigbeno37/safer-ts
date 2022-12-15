@@ -3,16 +3,16 @@ import {ZodSchema, z} from 'zod';
 import {ParseJSONError, parseJSONWithSchema} from './SafeJSON';
 import { WebSocketServer } from 'ws';
 
-type SafeWebSocketConfig = {
+export type SafeWebSocketConfig = {
 	url: string
 };
 
-type SafeWebSocket<M> = {
+export type SafeWebSocket<M> = {
 	send: (data: M) => IO<void>,
 	close: () => IO<void>
 };
 
-type SafeWebSocketConnectionHandler<S extends ZodSchema> = {
+export type SafeWebSocketConnectionHandler<S extends ZodSchema> = {
 	onClose: () => void,
 	onMessage: (message: z.infer<S>) => void,
 	onInvalidMessage: (error: ParseJSONError, rawMessage: string) => void
@@ -35,7 +35,7 @@ const bindSafeWebSocketListeners = <S extends ZodSchema, M>(schema: S, ws: WebSo
 	);
 };
 
-const createSafeWebSocket = <S extends ZodSchema, M>(schema: S, config: SafeWebSocketConfig) => (createListeners: (ws: SafeWebSocket<M>) => SafeWebSocketConnectionHandler<S>): IO<AsyncResult<{}, Event>> => {
+export const createSafeWebSocket = <S extends ZodSchema, M>(schema: S, config: SafeWebSocketConfig) => (createListeners: (ws: SafeWebSocket<M>) => SafeWebSocketConnectionHandler<S>): IO<AsyncResult<{}, Event>> => {
 	return io(() => {
 		const ws = new WebSocket(config.url);
 
@@ -51,7 +51,7 @@ const createSafeWebSocket = <S extends ZodSchema, M>(schema: S, config: SafeWebS
 	});
 };
 
-type SafeWebSocketServerListeners<S extends ZodSchema, M> = {
+export type SafeWebSocketServerListeners<S extends ZodSchema, M> = {
 	onConnection: (ws: SafeWebSocket<M>) => SafeWebSocketConnectionHandler<S>
 };
 
