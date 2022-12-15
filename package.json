@@ -1,6 +1,6 @@
 {
   "name": "safer-ts",
-  "version": "3.1.0",
+  "version": "4.0.0",
   "description": "A collection of utility types and data structures to provide a safer and more satisfying developer experience, inspired by Rust and functional programming paradigms",
   "scripts": {
     "clean": "rm -rf dist",
