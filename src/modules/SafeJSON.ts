@@ -1,5 +1,5 @@
-import { Err, Ok, Result } from './monads/Result';
 import { z, ZodError, ZodSchema } from 'zod';
+import { Err, Ok, Result } from '../monads';
 
 export type ParseJSONError =
 	| { type: 'PARSE_ERROR', error: Error }

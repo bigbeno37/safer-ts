@@ -1,4 +1,4 @@
-import { io, IO } from './monads/IO';
+import { io, IO } from '../monads';
 
 /**
  * Represents safer versions of various common {@link Window} utilities, generally involving {@link IO}.

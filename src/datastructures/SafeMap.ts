@@ -1,4 +1,4 @@
-import { intoOption, Option } from '../monads/Option';
+import { intoOption, Option } from '../monads';
 
 /**
  * Represents a {@link Map} with safer API, in addition to being immutable. Any mutation will generate new SafeMaps

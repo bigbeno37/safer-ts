@@ -1,5 +1,5 @@
 import { Err, Ok, Result } from './Result';
-import type {SafeMap} from '../datastructures/SafeMap';
+import type { SafeMap } from '../datastructures';
 
 /**
  * Represents an optional value, effectively null on steroids. This can be used to represent the absence of a value,

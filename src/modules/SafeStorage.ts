@@ -1,8 +1,6 @@
-import { intoOption, Option } from './monads/Option';
-import { z, ZodError, ZodSchema } from 'zod';
-import { Err, Ok, Result } from './monads/Result';
-import { io, IO } from './monads/IO';
+import { z, ZodSchema } from 'zod';
 import { parseJSON, ParseJSONError } from './SafeJSON';
+import { intoOption, io, IO, Option, Result } from '../monads';
 
 /**
  * Represents a safer version of the traditional {@link Storage} API. This integrates with {@link Option} and {@link IO}
