@@ -1,80 +1,83 @@
+type ResultHelpers<T, E> = {
+	/**
+	 * Returns whether this Result is an Ok.
+	 */
+	isOk: () => boolean,
+
+	/**
+	 * Returns whether this Result is an Err.
+	 */
+	isErr: () => boolean,
+
+	/**
+	 * Maps this Result's data if this is an Ok, otherwise does nothing and returns this Result.
+	 *
+	 * @param mapper A mapping function that will map this Result's data if this is Ok.
+	 */
+	map: <U>(mapper: (data: T) => U) => Result<U, E>,
+
+	/**
+	 * Maps this Result's error if this is an Err, otherwise does nothing and returns this Result.
+	 *
+	 * @param mapper A mapping function that will map this Result's error if this is Err.
+	 */
+	mapErr: <U>(mapper: (error: E) => U) => Result<T, U>,
+
+	/**
+	 * Maps this Result's data into a new Result if this is an Ok, otherwise does nothing and returns this Result.
+	 * Useful for chaining multiple operations that may fail together without massive indentation.
+	 *
+	 * @param chainer A function that will map this Result's data into a new Result if this is Ok.
+	 */
+	andThen: <U>(chainer: (data: T) => Result<U, E>) => Result<U, E>,
+
+	/**
+	 * Maps this Result's error into a new Result if this is an Err, otherwise does nothing and returns this Result.
+	 *
+	 * @param chainer A function that will map this Result's error into a new Result if this is Err.
+	 */
+	orElse: <U>(chainer: (error: E) => Result<T, U>) => Result<T, U>,
+
+	/**
+	 * Returns this Result's data if this is Ok, OTHERWISE THROWS AN ERROR.
+	 *
+	 * NOTE: This is an escape hatch for imperative code; be sure to check that this is an Ok before calling this!
+	 * It is recommended to make use of {@link Result#map}, {@link Result#andThen}, and {@link Result#inspect} instead.
+	 */
+	unwrap: () => T,
+
+	/**
+	 * Returns this Result's error if this is Err, OTHERWISE THROWS AN ERROR.
+	 *
+	 * NOTE: This is an escape hatch for imperative code; be sure to check that this is an Err before calling this!
+	 * It is recommended to make use of {@link Result#mapErr}, {@link Result#orElse}, and {@link Result#inspectErr} instead.
+	 */
+	unwrapErr: () => E,
+
+	/**
+	 * Runs the given function if this is an Ok, otherwise does nothing and returns this Result.
+	 *
+	 * @param fn The function to be run.
+	 */
+	inspect: (fn: (data: T) => void) => Result<T, E>,
+
+	/**
+	 * Runs the given function if this is an Err, otherwise does nothing and returns this Result.
+	 *
+	 * @param fn The function to be run.
+	 */
+	inspectErr: (fn: (error: E) => void) => Result<T, E>,
+
+	caseOf: <U>(cases: { Ok: (data: T) => U, Err: (error: E) => U }) => U
+};
+
 /**
  * Represents the result of an operation, containing either a successful value or an error that occurred. This can be
  * useful in situations where an Error might otherwise be used, such as parsing JSON. This is especially useful in
  * JavaScript, where Errors may be thrown at any level and aren't documented. Returning a Result, on the other hand,
  * is explicit in the code itself and is fully type-safe.
  */
-export type Result<T, E> = ({ type: 'ok', data: T } | { type: 'err', error: E })
-	& {
-		/**
-		 * Returns whether this Result is an Ok.
-		 */
-		isOk: () => boolean,
-
-		/**
-		 * Returns whether this Result is an Err.
-		 */
-		isErr: () => boolean,
-
-		/**
-		 * Maps this Result's data if this is an Ok, otherwise does nothing and returns this Result.
-		 *
-		 * @param mapper A mapping function that will map this Result's data if this is Ok.
-		 */
-		map: <U>(mapper: (data: T) => U) => Result<U, E>,
-
-		/**
-		 * Maps this Result's error if this is an Err, otherwise does nothing and returns this Result.
-		 *
-		 * @param mapper A mapping function that will map this Result's error if this is Err.
-		 */
-		mapErr: <U>(mapper: (error: E) => U) => Result<T, U>,
-
-		/**
-		 * Maps this Result's data into a new Result if this is an Ok, otherwise does nothing and returns this Result.
-		 * Useful for chaining multiple operations that may fail together without massive indentation.
-		 *
-		 * @param chainer A function that will map this Result's data into a new Result if this is Ok.
-		 */
-		andThen: <U>(chainer: (data: T) => Result<U, E>) => Result<U, E>,
-
-		/**
-		 * Maps this Result's error into a new Result if this is an Err, otherwise does nothing and returns this Result.
-		 *
-		 * @param chainer A function that will map this Result's error into a new Result if this is Err.
-		 */
-		orElse: <U>(chainer: (error: E) => Result<T, U>) => Result<T, U>,
-
-		/**
-		 * Returns this Result's data if this is Ok, OTHERWISE THROWS AN ERROR.
-		 *
-		 * NOTE: This is an escape hatch for imperative code; be sure to check that this is an Ok before calling this!
-		 * It is recommended to make use of {@link Result#map}, {@link Result#andThen}, and {@link Result#inspect} instead.
-		 */
-		unwrap: () => T,
-
-		/**
-		 * Returns this Result's error if this is Err, OTHERWISE THROWS AN ERROR.
-		 *
-		 * NOTE: This is an escape hatch for imperative code; be sure to check that this is an Err before calling this!
-		 * It is recommended to make use of {@link Result#mapErr}, {@link Result#orElse}, and {@link Result#inspectErr} instead.
-		 */
-		unwrapErr: () => E,
-
-		/**
-		 * Runs the given function if this is an Ok, otherwise does nothing and returns this Result.
-		 *
-		 * @param fn The function to be run.
-		 */
-		inspect: (fn: (data: T) => void) => Result<T, E>,
-
-		/**
-		 * Runs the given function if this is an Err, otherwise does nothing and returns this Result.
-		 *
-		 * @param fn The function to be run.
-		 */
-		inspectErr: (fn: (error: E) => void) => Result<T, E>
-	};
+export type Result<T, E> = ({ type: 'ok', data: T } | { type: 'err', error: E }) & ResultHelpers<T, E>;
 
 /**
  * Returns whether the given {@link Result} is an Ok, and provides type narrowing. This may be preferable over
@@ -139,6 +142,9 @@ const createResult = <T, E>(obj: { type: 'ok', data: T } | { type: 'err', error:
 		}
 
 		return this;
+	},
+	caseOf<U>(cases: { Ok: (data: T) => U, Err: (error: E) => U }): U {
+		return isOk(this) ? cases.Ok(this.data) : cases.Err(this.error);
 	}
 });
 
