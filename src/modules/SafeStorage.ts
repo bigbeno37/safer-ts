@@ -69,7 +69,7 @@ export const getSafeStorage = (storage: Storage) => <S extends Record<string, Zo
 	},
 	clear() {
 		return io(() => {
-			storage.clear();
+			storage.clear();z
 			return this;
 		});
 	}
@@ -78,9 +78,9 @@ export const getSafeStorage = (storage: Storage) => <S extends Record<string, Zo
 /**
  * Returns a {@link SafeStorage} based on {@link localStorage} and the given schema.
  */
-export const getSafeLocalStorage = getSafeStorage(localStorage);
+export const getSafeLocalStorage = () => getSafeStorage(localStorage);
 
 /**
  * Returns a {@link SafeStorage} based on {@link sessionStorage} and the given schema.
  */
-export const getSafeSessionStorage = getSafeStorage(sessionStorage);
+export const getSafeSessionStorage = () => getSafeStorage(sessionStorage);
